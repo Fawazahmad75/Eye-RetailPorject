@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("OWNER") // OWNER | MANAGER | VIEWER
+  createdAt DateTime @default(now())
+  stores    Store[]
+}
+
+model Store {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  cameras   Camera[]
+  alerts    Alert[]
+  createdAt DateTime @default(now())
+}
+
+model Camera {
+  id        String   @id @default(cuid())
+  name      String
+  location  String
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id])
+  isActive  Boolean  @default(true)
+  alerts    Alert[]
+  createdAt DateTime @default(now())
+}
+
+model Alert {
+  id         String   @id @default(cuid())
+  cameraId   String
+  camera     Camera   @relation(fields: [cameraId], references: [id])
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id])
+  type       String   @default("EMPTY_SHELF") // EMPTY_SHELF | LOW_STOCK
+  severity   String   @default("MEDIUM")      // LOW | MEDIUM | HIGH
+  imageUrl   String?
+  detections String   @default("[]")          // JSON string of detection results
+  status     String   @default("NEW")         // NEW | ACKNOWLEDGED | RESOLVED
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+}
